@@ -1,32 +1,29 @@
-const express = require("express"); // import express
+const express = require('express'); // import express
 
 const app = express(); // create a new app
+require('./db');
+const catRoutes = require('./routes/catRoutes');
 
-const cats = [];
+const logger = () => function (req, res, next) {
+  console.log('Host:', req.host);
+  console.log('Method:', req.method);
+  console.log('Path:', req.path);
+  return next();
+};
+
+app.use(logger());
 
 app.use(express.json()); // parses request body from a json string then sets it into res.body
 
-app.post("/create", (req, res) => {
-    cats.push(req.body);
-    res.json(cats[cats.length - 1]);
+app.use('/cats', catRoutes);
+
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  const { status, msg } = err;
+  console.log('ERROR:', err);
+  res.status(status || 500).send(msg || 'Oops');
 });
 
-app.get("/getAll", (req, res) => res.json(cats));
-
-app.patch("/update/:id", (req, res) => {
-    const { id } = req.params;
-    const { name } = req.query; // extracting the ?name=value from the request
-    const toUpdate = cats[id];
-    toUpdate.name = name;
-    res.json(toUpdate);
-})
-
-app.delete("/remove/:id", (req, res) => {
-    const { id } = req.params;
-    const removed = cats.splice(id, 1);
-    res.json(removed);
-})
-
-
-
 const server = app.listen(4494, () => console.log('Server successfully started on port', server.address().port));
+
+module.exports = server;
